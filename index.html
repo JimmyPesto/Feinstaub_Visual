@@ -19,6 +19,31 @@
 		/*padding:20px;*/
 	}
 </style>
+<style> /* set the CSS */
+
+/*body { font: 12px Arial;}*/
+
+/*path {*/
+	/*stroke: steelblue;*/
+	/*stroke-width: 2;*/
+	/*fill: none;*/
+/*}*/
+
+div.tooltip {
+	position: absolute;
+	text-align: center;
+	/*width: 60px;*/
+	/*height: 16px;*/
+	padding: 4px;
+	font: 12px sans-serif;
+	font-weight: bold;
+	background: lightsteelblue;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
+}
+
+</style>
 <body>
 <div id="data" ></div>
 <script>
@@ -54,6 +79,7 @@
     var x = d3.scaleTime()
         .domain(d3.extent(data, function(d) { return d.timestamp; })).nice()
         .range([0, width ]);
+
     svg.append("g")
         .attr("transform", "translate(0," + height + ")")
         .call(d3.axisBottom(x)
@@ -62,14 +88,16 @@
         .style("text-anchor", "end")
         .attr("dx", "-.8em")
         .attr("dy", ".15em")
-        .attr("transform", "rotate(-65)")
+        .attr("transform", "rotate(-65)");
 
     // Add Y axis
     var y = d3.scaleLinear()
-        .domain([0, d3.max(data, function(d) { return +d.value; })])//60])//d3.max(data, function(d) { return +d.value; })-80])
+        .domain([0, 60])//d3.max(data, function(d) { return +d.value; })-80])
         .range([ height, 0 ]);
+
     svg.append("g")
-        .call(d3.axisLeft(y))
+        .call(d3.axisLeft(y));
+
     svg.append("text")
         .attr("transform", "rotate(-90)")
         .attr("y", 6)
@@ -77,12 +105,12 @@
         .style("text-anchor", "end")
         .text("Feinstaub (PM10)");
 
-    // color palette
-    var res = sumstat.map(function(d){ return d.key }) // list of group names
-
-    var color = d3.scaleOrdinal()
-        .domain(res)
-        .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']);
+    // // color palette
+    // var res = sumstat.map(function(d){ return d.key }) // list of group names
+	//
+    // var color = d3.scaleOrdinal()
+    //     .domain(res)
+    //     .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']);
 
     // Draw the line
     svg.selectAll(".line")
@@ -92,7 +120,7 @@
         .attr("fill", "none")
         .attr("stroke", '#888888')//function(d){ return color(d.key) })
         .attr("stroke-width", 0.3)
-	    //.style("opacity", 1)
+	    .style("opacity", 0.7)
         .attr("d", function(d){
             return d3.line()
                 .x(function(d) { return x(d.timestamp); })
@@ -102,22 +130,65 @@
         .on("mouseover", mouseover)
         .on("mouseout", mouseout);
 
+    svg.append("g")
+        .attr("transform", "translate(0, "+y(40)+")")
+        .append("line")
+        .attr("x2", width)
+        .style("stroke", "#ef1000")
+        .style("stroke-width", "1.5px");
+    svg.append("text")
+	    .style("fill", "#ef1000")
+        .attr("transform", "translate("+(width-3)+", "+y(40)+")")
+        .attr("y", 6)
+        .attr("dy", "-.71em")
+        .style("text-anchor", "end")
+        .text("zugelassener Jahresmittelwert (PM10)");
+
+    svg.append("g")
+        .attr("transform", "translate(0, "+y(50)+")")
+        .append("line")
+        .attr("x2", width)
+        .style("stroke", "#ef4300")
+        .style("stroke-width", "1.5px");
+    svg.append("text")
+        .style("fill", "#ef4300")
+        .attr("transform", "translate("+(width-3)+", "+y(50)+")")
+        .attr("y", 6)
+        .attr("dy", "-.71em")
+        .style("text-anchor", "end")
+        .text("zugelassener Tagesmittelwert (PM10)");
+
     // set the type of number here, n is a number with a comma, .2% will get you a percent, .2f will get you 2 decimal points
     var NumbType = d3.format(".2f");
 
+    // Define the div for the tooltip
+    var div = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
     function mouseover(d, i) {
-        d3.select(this).style("stroke","red")
-            .style("opacity", 0.8)
-            .attr("stroke", '#4296ef')//function(d){ return color(d.key) })
-            .attr("stroke-width", 1);
-		console.log(d.key)
+        d3.select(this)
+            .style("opacity", 1)
+            .attr("stroke", '#232323')//function(d){ return color(d.key) })
+            .attr("stroke-width", 1.5);
+		console.log(d)
         // $("#id1").text(d.key);
+        div.transition()
+            .duration(200)
+            .style("opacity", .9);
+        div	.html("Sensor ID = "+d.key)
+	        .style("left", (d3.event.pageX) + "px")
+	        .style("top", (d3.event.pageY - 28) + "px");
     }
 
     function mouseout(d, i) {
-        d3.select(this).style("stroke", function(d) { return color(d.key); })
+        d3.select(this)//.style("stroke", function(d) { return color(d.key); })
             .attr("stroke", '#888888')//function(d){ return color(d.key) })
-            .attr("stroke-width", 0.3);
+            .attr("stroke-width", 0.3)
+            .style("opacity", 0.7);
+        div.transition()
+            .duration(500)
+            .style("opacity", 0);
     }
 </script>
 
