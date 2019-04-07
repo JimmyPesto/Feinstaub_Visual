@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<script type="text/javascript" src="js/daw2018_10.js"></script>
+	<script type="text/javascript" src="js/daw2018_25.js"></script>
+	<script type="text/javascript" src="js/d3.v5.js"></script>
+</head>
+<style type="text/css">
+	/*div#data10_dec {*/
+		/*background-image: url(luftdruck_dec.png);*/
+		/*margin-bottom: 100px;*/
+		/*margin-left: 50px;*/
+		/*margin-right: 20px;*/
+		/*margin-top: 20px;*/
+		/*background-color:orange;*/
+		/*width:500px;height:200px;*/
+		/*border:1px solid red;*/
+		/*padding:20px;*/
+	}
+</style>
+<body>
+<div id="data" ></div>
+<script>
+    var parseTime = d3.timeParse("%Y-%m-%d %H:%M:%S");
+    var formatTime = d3.timeFormat("%d-%b");
+
+    var data = data10;
+
+    data.forEach(function(d) {
+        d.timestamp = parseTime(d.timestamp);
+        //console.log(formatTime(d.timestamp));
+    });
+
+    var margin = {top: 10, right: 10, bottom: 50, left: 50},
+        width = 1000 - margin.left - margin.right,
+        height = 600 - margin.top - margin.bottom;
+
+    // append the svg object to the body of the page
+    var svg = d3.select("#data")
+        .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    // group the data: I want to draw one line per group
+    var sumstat = d3.nest() // nest function allows to group the calculation per level of a factor
+        .key(function(d) { return d.sensorid;})
+        .entries(data);
+
+    // Add X axis --> it is a date format
+    var x = d3.scaleTime()
+        .domain(d3.extent(data, function(d) { return d.timestamp; })).nice()
+        .range([0, width ]);
+    svg.append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(d3.axisBottom(x)
+            .tickFormat(d3.timeFormat("%d-%b")))
+        .selectAll("text")
+        .style("text-anchor", "end")
+        .attr("dx", "-.8em")
+        .attr("dy", ".15em")
+        .attr("transform", "rotate(-65)")
+
+    // Add Y axis
+    var y = d3.scaleLinear()
+        .domain([0, d3.max(data, function(d) { return +d.value; })])//60])//d3.max(data, function(d) { return +d.value; })-80])
+        .range([ height, 0 ]);
+    svg.append("g")
+        .call(d3.axisLeft(y))
+    svg.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("y", 6)
+        .attr("dy", ".71em")
+        .style("text-anchor", "end")
+        .text("Feinstaub (PM10)");
+
+    // color palette
+    var res = sumstat.map(function(d){ return d.key }) // list of group names
+
+    var color = d3.scaleOrdinal()
+        .domain(res)
+        .range(['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999']);
+
+    // Draw the line
+    svg.selectAll(".line")
+        .data(sumstat)
+        .enter()
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", '#888888')//function(d){ return color(d.key) })
+        .attr("stroke-width", 0.3)
+	    //.style("opacity", 1)
+        .attr("d", function(d){
+            return d3.line()
+                .x(function(d) { return x(d.timestamp); })
+                .y(function(d) { return y(+d.value); })
+                (d.values)
+        })
+        .on("mouseover", mouseover)
+        .on("mouseout", mouseout);
+
+    // set the type of number here, n is a number with a comma, .2% will get you a percent, .2f will get you 2 decimal points
+    var NumbType = d3.format(".2f");
+
+    function mouseover(d, i) {
+        d3.select(this).style("stroke","red")
+            .style("opacity", 0.8)
+            .attr("stroke", '#4296ef')//function(d){ return color(d.key) })
+            .attr("stroke-width", 1);
+		console.log(d.key)
+        // $("#id1").text(d.key);
+    }
+
+    function mouseout(d, i) {
+        d3.select(this).style("stroke", function(d) { return color(d.key); })
+            .attr("stroke", '#888888')//function(d){ return color(d.key) })
+            .attr("stroke-width", 0.3);
+    }
+</script>
+
+</body>
+</html>
