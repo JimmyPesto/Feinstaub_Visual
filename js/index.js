@@ -13,10 +13,14 @@ const chartId = "chart"; //diagram
 const pm10 = "PM10", pm25 = "PM2.5";
 const durationRate = 500;
 
+var keepScale = true;
+$('#pm10').prop("checked", true);
+$('#pm25').prop("checked", false);
+
 const thresholds = {
     [pm25]: {
-        day: 25,
-        year: 20,
+        day: 20,
+        year: 25,
     },
     [pm10]: {
         day: 50,
@@ -65,7 +69,7 @@ var svg = d3.select("#"+chartId)
     .attr("preserveAspectRatio", "xMinYMin meet")
     .attr("viewBox", -margin.left+" "+(-margin.top)+" 600 400")
     //class to make it responsive
-    .classed("svg-content-responsive", true);
+    // .classed("svg-content-responsive", true);
 
 //calcSize($(".svg-container").width());
 
@@ -101,45 +105,13 @@ function update(data, selectedPM) {
     svg.append("text")
         .attr("id","y_legend")//to delete later by this id
         .attr("transform", "rotate(-90)")
-        .attr("y", -48)
+        .attr("y", -45)
         .attr("dy", ".71em")
         .style("text-anchor", "end")
         .text("Feinstaub ("+selectedPM+") [µg/m³]");
 
-    //Grenzwerte
-    svg.selectAll(".thresholdLines").remove();
-    svg.selectAll(".thresholdText").remove();
-    svg.append("g")
-        .attr("transform", "translate(0, "+y(thresholds[selectedPM].year)+")")
-        .append("line")
-        .attr("class","thresholdLines")
-        .attr("x2", width)
-        .style("stroke", "#ef1000")
-        .style("stroke-width", "1.5px");
-    svg.append("text")
-        .attr("class","thresholdText")
-        .style("fill", "#ef1000")
-        .attr("transform", "translate("+(width-3)+", "+y(thresholds[selectedPM].year)+")")
-        .attr("y", 6)
-        .attr("dy", "-.71em")
-        .style("text-anchor", "end")
-        .text("zugelassener Jahresmittelwert ("+selectedPM+")");
 
-    svg.append("g")
-        .attr("transform", "translate(0, "+y(thresholds[selectedPM].day)+")")
-        .append("line")
-        .attr("class","thresholdLines")
-        .attr("x2", width)
-        .style("stroke", "#ef4300")
-        .style("stroke-width", "1.5px");
-    svg.append("text")
-        .attr("class","thresholdText")
-        .style("fill", "#ef4300")
-        .attr("transform", "translate("+(width-3)+", "+y(thresholds[selectedPM].day)+")")
-        .attr("y", 6)
-        .attr("dy", "-.71em")
-        .style("text-anchor", "end")
-        .text("zugelassener Tagesmittelwert ("+selectedPM+")");
+
 
 
     // Create the X axis:
@@ -155,7 +127,19 @@ function update(data, selectedPM) {
         .attr("transform", "rotate(-65)");
 
     // create the Y axis
-    //y.domain([0, 60]);//d3.max(data, function(d) { return +d.value; })-80]);
+    if (!keepScale) {
+        if(selectedPM === "PM10") {
+            y.domain([0, d3.max(data10, function (d) {
+                return +d.value;
+            })]);
+        }
+        else {
+            y.domain([0, d3.max(data25, function (d) {
+                return +d.value;
+            })]);
+        }
+    }
+
     svg.selectAll(".myYaxis")
         .transition()
         .duration(durationRate)
@@ -182,6 +166,43 @@ function update(data, selectedPM) {
                 .y(function(d) { return y(+d.value); })
                 (d.values)
         })
+
+    //Grenzwerte
+    svg.selectAll(".thresholdLines").remove();
+    svg.selectAll(".thresholdText").remove();
+    svg.append("g")
+        .attr("transform", "translate(0, "+y(thresholds[selectedPM].year)+")")
+        .append("line")
+        .attr("class","thresholdLines")
+        .attr("x2", width)
+        .style("stroke", "#ef1000")
+        .style("stroke-width", "1.5px");
+    svg.append("text")
+        .attr("class","thresholdText")
+        .style("fill", "#ef1000")
+        .attr("transform", "translate("+(width-3)+", "+y(thresholds[selectedPM].year)+")")
+        .attr("y", 3)
+        .attr("dy", "-.71em")
+        .style("text-anchor", "end")
+        .text("zugelassener Jahresmittelwert ("+selectedPM+")");
+
+    if(selectedPM === "PM10") {
+        svg.append("g")
+            .attr("transform", "translate(0, "+y(thresholds[selectedPM].day)+")")
+            .append("line")
+            .attr("class","thresholdLines")
+            .attr("x2", width)
+            .style("stroke", "#ef4300")
+            .style("stroke-width", "1.5px");
+        svg.append("text")
+            .attr("class","thresholdText")
+            .style("fill", "#ef4300")
+            .attr("transform", "translate("+(width-3)+", "+y(thresholds[selectedPM].day)+")")
+            .attr("y", 3)
+            .attr("dy", "-.71em")
+            .style("text-anchor", "end")
+            .text("zugelassener Tagesmittelwert ("+selectedPM+")");
+    }
 }
 
 // At the beginning, I run the update function on the first dataset:
@@ -208,6 +229,18 @@ const updateDataSource = function() {
 
 document.getElementById("pm10").onclick = updateDataSource;
 document.getElementById("pm25").onclick = updateDataSource;
+
+
+$('#keepScale').on('change', function() {
+    if(this.checked) {
+        keepScale = true;
+        updateDataSource();
+    }
+    else {
+        keepScale = false;
+        updateDataSource();
+    }
+});
 
 //display tooltip while mouse on linechart
 var div = d3.select("body").append("div")
