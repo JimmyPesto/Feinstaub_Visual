@@ -1,3 +1,10 @@
+#container {
+    margin: 20px;
+}
+#chart {
+    background-color: #eee;
+}
+
 /* set the CSS -- EIGEN ---*/
 
 /*body { font: 12px Arial;}*/
