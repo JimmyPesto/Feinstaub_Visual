@@ -8,10 +8,10 @@ const parseDate = function(d) {
 data10.forEach(parseDate);
 data25.forEach(parseDate);
 
+const chartId = "chart"; //diagram
+
 const pm10 = "PM10", pm25 = "PM2.5";
 const durationRate = 500;
-
-let width, height;
 
 const thresholds = {
     [pm25]: {
@@ -36,16 +36,38 @@ var sumstat25 = d3.nest() // nest function allows to group the calculation per l
     .entries(data25);
 const sensorCountPM25 = sumstat25.length;
 
-// set the dimensions and margins of the graph
-var margin = {top: 10, right: 10, bottom: 50, left: 50};
+var chart = $("#"+chartId),
+    aspect = chart.width() / chart.height(),
+    container = chart.parent();
+console.log({container});
+console.log(chart.height());
 
-const chartDiv = document.getElementById("diagram");
+// set the dimensions and margins of the graph
+var margin = {top: 15, right: 20, bottom: 50, left: 60},
+    width = 600 - margin.left - margin.right, height = 400 -margin.top - margin.bottom;
+
+/*
+function calcSize(width) {
+    console.log("calcSize input width: "+width);
+    let width = width - margin.left - margin.right;
+    let height = 300 - margin.top - margin.bottom;
+    console.log({width},{height});
+}
+*/
+const chartDiv = document.getElementById(chartId);
 
 // append the svg object to the body of the page
-var svg = d3.select("#diagram")
-    .append("svg");
+var svg = d3.select("#"+chartId)
+    .append("div")
+    .classed("svg-container", true)
+    .append("svg")
+    //responsive SVG needs these 2 attributes and no width and height attr
+    .attr("preserveAspectRatio", "xMinYMin meet")
+    .attr("viewBox", -margin.left+" "+(-margin.top)+" 600 400")
+    //class to make it responsive
+    .classed("svg-content-responsive", true);
 
-redraw();
+//calcSize($(".svg-container").width());
 
 // Initialise a X axis:
 var x = d3.scaleTime()
@@ -55,7 +77,7 @@ var xAxis = d3.axisBottom(x)
     .tickFormat(d3.timeFormat("%d-%b"));
 svg.append("g")
     .attr("transform", "translate(0," + height + ")")
-    .attr("class","myXaxis")
+    .attr("class","myXaxis");
 //.call(xAxis)
 
 
@@ -70,7 +92,7 @@ svg.append("g")
 
 // Create a function that takes a dataset as input and update the plot:
 function update(data, selectedPM) {
-    //console.log({selectedPM});
+    console.log({selectedPM});
     //console.log(thresholds[selectedPM]);
     const sensorCount = data.length;
     document.getElementById("sensorCount").innerHTML = "Anzahl Sensoren: "+sensorCount;
@@ -184,8 +206,6 @@ const updateDataSource = function() {
     update(data, selectedPM);
 };
 
-updateDataSource();
-
 document.getElementById("pm10").onclick = updateDataSource;
 document.getElementById("pm25").onclick = updateDataSource;
 
@@ -223,28 +243,3 @@ svg.selectAll(".line")
     .on("mouseover", mouseover)
     .on("mouseout", mouseout);
 
-window.addEventListener('resize', redraw);
-
-function redraw() {
-    console.log("redraw");
-    // Extract the width and height that was computed by CSS.
-    width = document.getElementById('diagram').offsetWidth;//chartDiv.clientWidth;
-    height = document.getElementById('diagram').offsetHeight;//chartDiv.clientHeight;
-
-
-    console.log({width});
-    console.log({height});
-
-    // Use the extracted size to set the size of an SVG element.
-
-    // append the svg object to the body of the page
-
-    svg
-        .attr("width", width - margin.left - margin.right)
-        .attr("height", height)
-        .append("g")
-        .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
-
-
-}
