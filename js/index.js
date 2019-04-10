@@ -40,15 +40,10 @@ var sumstat25 = d3.nest() // nest function allows to group the calculation per l
     .entries(data25);
 const sensorCountPM25 = sumstat25.length;
 
-var chart = $("#"+chartId),
-    aspect = chart.width() / chart.height(),
-    container = chart.parent();
-console.log({container});
-console.log(chart.height());
-
 // set the dimensions and margins of the graph
 var margin = {top: 15, right: 20, bottom: 50, left: 60},
-    width = 600 - margin.left - margin.right, height = 400 -margin.top - margin.bottom;
+    width = 600 - margin.left - margin.right,
+    height = 400 -margin.top - margin.bottom;
 
 /*
 function calcSize(width) {
